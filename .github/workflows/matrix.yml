@@ -1,0 +1,42 @@
+name: CI Matrix Build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [16, 18, 20]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: matrix-0e4cd7e
+        run: echo "Building on ${{ matrix.os }} with Node ${{ matrix.node }}"
+
+      - name: Generate build artifact (non-empty)
+        run: |
+          node -e "const fs=require('fs'); const content = [
+            'Matrix build artifact',
+            `OS=${process.platform}`,
+            `Runner=${process.env.RUNNER_OS}`,
+            `Node=${process.version}`,
+            `Variant=${process.env.RUNNER_OS}-node${process.version}`
+          ].join('\n'); fs.writeFileSync('output.txt', content); console.log(content);"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-0e4cd7e-${{ matrix.os }}-node${{ matrix.node }}
+          path: output.txt
+          if-no-files-found: error
